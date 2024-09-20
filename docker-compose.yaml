@@ -1,0 +1,51 @@
+---
+services:
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.60
+    ports:
+      - 4317:4317
+      - 4318:4318
+      - 14250:14250
+      - 14268:14268
+      - 16686:16686
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+  postgres:
+    container_name: postgres
+    image: postgres:16
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=changeme
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:7.8
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mail.com
+      - PGADMIN_DEFAULT_PASSWORD=changeme
+    ports:
+      - 8888:80
+    depends_on:
+      - postgres
+  # golang:
+  #   container_name: golang
+  #   build: go-otlp
+  #   ports:
+  #     - 8000:8000
+  #   environment:
+  #     - PORT=8000
+  #     - DB_USER=postgres
+  #     - DB_PASS=changeme
+  #     - DB_DB=postgres
+  #     - DB_PORT=5432
+  #     - DB_HOST=postgres
+  #     - OTLP_EXPORTER_ENDPOINT=jaeger:4317
+  #     - OTLP_SERVICE_NAME=go.otlp.api.justTest
+  #   depends_on:
+  #     - postgres
+  #     - jaeger
+  #   restart: always
+    
