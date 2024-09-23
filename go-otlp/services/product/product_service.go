@@ -5,8 +5,9 @@ import (
 	"go-otlp/repositories/product"
 	"go-otlp/services/price"
 
-	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const name = "go.otlp.api.product"
@@ -14,7 +15,7 @@ const name = "go.otlp.api.product"
 var (
 	tracer = otel.Tracer(name)
 	// meter  = otel.Meter(name)
-	logger = otelslog.NewLogger(name)
+	// logger = otelslog.NewLogger(name)
 )
 
 type productService struct {
@@ -32,12 +33,21 @@ func NewProductService(productRepo product.ProductRepository, priceServ price.Pr
 func (s productService) GetProducts(c context.Context) ([]ProductResponse, error) {
 	ctx, span := tracer.Start(c, "Service.GetProducts")
 	defer span.End()
-	var msg string
-	products, err := s.productRepo.GetProducts(c)
+
+	span.SetAttributes(
+		attribute.String("http.services", "product.GetProducts"),
+	)
+
+	// var msg string
+	products, err := s.productRepo.GetProducts(ctx)
 
 	if err != nil {
-		msg = err.Error()
-		logger.ErrorContext(ctx, msg, "error")
+		// msg = err.Error()
+		// logger.ErrorContext(ctx, msg,
+		// 	"method", "services",
+		// 	"status", "error",
+		// )
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -47,8 +57,12 @@ func (s productService) GetProducts(c context.Context) ([]ProductResponse, error
 		price, err := s.priceServ.GetPrice(product.Id)
 
 		if err != nil {
-			msg = err.Error()
-			logger.ErrorContext(ctx, msg, "error")
+			// msg = err.Error()
+			// logger.ErrorContext(ctx, msg,
+			// 	"method", "services",
+			// 	"status", "error",
+			// )
+			span.RecordError(err)
 			return nil, err
 		}
 
@@ -60,8 +74,15 @@ func (s productService) GetProducts(c context.Context) ([]ProductResponse, error
 		}
 		productResponses = append(productResponses, productResponse)
 	}
-	msg = "Successful"
-	logger.InfoContext(ctx, msg, "success")
+	// msg = "Successful"
+	// logger.InfoContext(ctx, msg,
+	// 	"method", "services",
+	// 	"status", "success",
+	// )
+
+	span.AddEvent("Services.GetProducts", trace.WithAttributes(
+		attribute.String("status", "successful"),
+	))
 
 	return productResponses, nil
 }

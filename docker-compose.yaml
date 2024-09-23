@@ -30,22 +30,22 @@ services:
       - 8888:80
     depends_on:
       - postgres
-  # golang:
-  #   container_name: golang
-  #   build: go-otlp
-  #   ports:
-  #     - 8000:8000
-  #   environment:
-  #     - PORT=8000
-  #     - DB_USER=postgres
-  #     - DB_PASS=changeme
-  #     - DB_DB=postgres
-  #     - DB_PORT=5432
-  #     - DB_HOST=postgres
-  #     - OTLP_EXPORTER_ENDPOINT=jaeger:4317
-  #     - OTLP_SERVICE_NAME=go.otlp.api.justTest
-  #   depends_on:
-  #     - postgres
-  #     - jaeger
-  #   restart: always
+  golang:
+    container_name: golang
+    build: go-otlp
+    ports:
+      - 8000:8000
+    environment:
+      - PORT=8000
+      - DB_USER=postgres
+      - DB_PASS=changeme
+      - DB_DB=postgres
+      - DB_PORT=5432
+      - DB_HOST=postgres
+      - OTLP_EXPORTER_ENDPOINT=jaeger:4317
+      - OTLP_SERVICE_NAME=go.otlp.api.justTest
+    depends_on:
+      - postgres
+      - jaeger
+    restart: always
     

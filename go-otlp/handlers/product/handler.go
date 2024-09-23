@@ -4,8 +4,8 @@ import (
 	"go-otlp/services/product"
 
 	"github.com/gofiber/fiber/v2"
-	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -14,7 +14,7 @@ const name = "go.otlp.api.product"
 var (
 	tracer = otel.Tracer(name)
 	// meter  = otel.Meter(name)
-	logger = otelslog.NewLogger(name)
+	// logger = otelslog.NewLogger(name)
 )
 
 type productHandler struct {
@@ -29,21 +29,40 @@ func (h productHandler) GetProducts(c *fiber.Ctx) error {
 	ctx, span := tracer.Start(c.Context(), "Handler.GetProducts")
 	defer span.End()
 
+	span.SetAttributes(
+		attribute.String("http.method", "GET"),
+		attribute.String("url.uri", "/products"),
+	)
+
 	ctx = trace.ContextWithSpan(ctx, span)
 
 	products, err := h.productService.GetProducts(ctx)
 
-	var msg string
+	// var msg string
 	if err != nil {
-		msg = err.Error()
-		logger.ErrorContext(ctx, msg, "error")
+		// msg = err.Error()
+		// logger.ErrorContext(ctx, msg,
+		// 	"method", "GET",
+		// 	"url", "/products",
+		// 	"status", fiber.StatusInternalServerError,
+		// )
+		span.RecordError(err)
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Error",
 			"error":   err.Error(),
 		})
 	}
-	msg = "Successful"
-	logger.InfoContext(ctx, msg, "info")
+	// msg = "Successful"
+	// logger.InfoContext(ctx, msg,
+	// 	"method", "GET",
+	// 	"url", "/products",
+	// 	"status", fiber.StatusOK,
+	// )
+
+	span.AddEvent(
+		"GetProducts", trace.WithAttributes(
+			attribute.String("Status", "Successful"),
+		))
 
 	return c.JSON(products)
 }
